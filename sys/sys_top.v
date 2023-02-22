@@ -27,21 +27,21 @@ module sys_top
 	input         FPGA_CLK3_50,
 
 	//////////// HDMI //////////
-	output        HDMI_I2C_SCL,
-	inout         HDMI_I2C_SDA,
+	// output        HDMI_I2C_SCL,
+	// inout         HDMI_I2C_SDA,
 
-	output        HDMI_MCLK,
-	output        HDMI_SCLK,
-	output        HDMI_LRCLK,
-	output        HDMI_I2S,
+	// output        HDMI_MCLK,
+	// output        HDMI_SCLK,
+	// output        HDMI_LRCLK,
+	// output        HDMI_I2S,
 
-	output        HDMI_TX_CLK,
-	output        HDMI_TX_DE,
-	output [23:0] HDMI_TX_D,
-	output        HDMI_TX_HS,
-	output        HDMI_TX_VS,
+	// output        HDMI_TX_CLK,
+	// output        HDMI_TX_DE,
+	// output [23:0] HDMI_TX_D,
+	// output        HDMI_TX_HS,
+	// output        HDMI_TX_VS,
 	
-	input         HDMI_TX_INT,
+	// input         HDMI_TX_INT,
 
 	//////////// SDR ///////////
 	output [12:0] SDRAM_A,
@@ -69,17 +69,34 @@ module sys_top
 
 `else
 	//////////// VGA ///////////
-	output  [5:0] VGA_R,
-	output  [5:0] VGA_G,
-	output  [5:0] VGA_B,
+	//SoCkit, DE10-standard, DE1-SoC implementation needs 8 bit color otherwise the brightness is low on the DAC
+	output  [7:0] VGA_R,
+	output  [7:0] VGA_G,
+	output  [7:0] VGA_B,
 	inout         VGA_HS,  // VGA_HS is secondary SD card detect when VGA_EN = 1 (inactive)
 	output		  VGA_VS,
-	input         VGA_EN,  // active low
+	//input       VGA_EN,  // active low
+	//SoCkit, DE10-standard, DE1-SoC implementation for on-board VGA DAC route - additional pins
+	output 		  VGA_CLK,
+	output 		  VGA_BLANK_N,
+	output 		  VGA_SYNC_N,
 
 	/////////// AUDIO //////////
 	output		  AUDIO_L,
 	output		  AUDIO_R,
 	output		  AUDIO_SPDIF,
+
+	//SoCkit, DE10-standard, DE1-SoC implementation for on-board AUDIO CODEC
+	inout wire    AUD_ADCLRCK,  // Audio CODEC ADC LR Clock
+	input wire    AUD_ADCDAT,   // Audio CODEC ADC Data
+	inout wire    AUD_DACLRCK,  // Audio CODEC DAC LR Clock
+	output wire   AUD_DACDAT,   // Audio CODEC DAC Data
+    inout wire    AUD_BCLK,     // Audio CODEC Bit-Stream Clock
+    output wire   AUD_XCK,      // Audio CODEC Chip Clock
+    output wire   AUD_MUTE,		// Audio CODEC Mute (active low)
+	// I2C Audio CODEC
+    inout wire    AUD_I2C_SDAT,     // I2C Data
+    output wire   AUD_I2C_SCLK,     // I2C Clock
 
 	//////////// SDIO ///////////
 	inout   [3:0] SDIO_DAT,
@@ -96,33 +113,79 @@ module sys_top
 `endif
 
 	////////// I/O ALT /////////
-	output        SD_SPI_CS,
-	input         SD_SPI_MISO,
-	output        SD_SPI_CLK,
-	output        SD_SPI_MOSI,
+	// output        SD_SPI_CS,
+	// input         SD_SPI_MISO,
+	// output        SD_SPI_CLK,
+	// output        SD_SPI_MOSI,
 
 	inout         SDCD_SPDIF,
 	output        IO_SCL,
 	inout         IO_SDA,
 
 	////////// ADC //////////////
-	output        ADC_SCK,
-	input         ADC_SDO,
-	output        ADC_SDI,
-	output        ADC_CONVST,
+	// output        ADC_SCK,
+	// input         ADC_SDO,
+	// output        ADC_SDI,
+	// output        ADC_CONVST,
 
 	////////// MB KEY ///////////
 	input   [1:0] KEY,
 
 	////////// MB SWITCH ////////
-	input   [3:0] SW,
+	//input   [3:0] SW,
+	//SoCkit, DE10-standard, DE1-SoC board implementation
+	inout   [3:0] SW,
 
 	////////// MB LED ///////////
-	output  [7:0] LED,
+	//output  [7:0] LED
+	//SoCkit, DE10-standard, DE1-SoC board implementation
+	output LED_0_USER,
+	output LED_1_HDD,
+	output LED_2_POWER,
+	output LED_3_LOCKED,
 
 	///////// USER IO ///////////
 	inout   [6:0] USER_IO
 );
+
+//SoCkit, DE10-standard, DE1-SoC board implementation
+wire        HDMI_TX_CLK;
+wire        HDMI_TX_DE;
+wire [23:0] HDMI_TX_D;
+wire        HDMI_TX_HS;
+wire        HDMI_TX_VS;
+wire        HDMI_TX_INT;
+wire        HDMI_I2C_SCL;
+wire        HDMI_I2C_SDA;
+wire        HDMI_MCLK;
+wire        HDMI_SCLK;
+wire        HDMI_LRCLK;
+wire        HDMI_I2S;
+
+wire        ADC_SCK;
+wire        ADC_SDO;
+wire        ADC_SDI;
+wire        ADC_CONVST;
+
+wire        SD_SPI_CS;
+wire        SD_SPI_MISO;
+wire        SD_SPI_CLK;
+wire        SD_SPI_MOSI;
+
+wire   [7:0] LED;
+
+assign LED_0_USER   = LED[0];
+assign LED_1_HDD    = LED[2];
+assign LED_2_POWER  = LED[4];
+assign LED_3_LOCKED = LED[6];
+
+// DE10-Standard / DE1-SoC / SoCKit implementation for on-board VGA DAC route - this will be overrided by code to set value to 0
+wire   VGA_EN;  // active low
+assign VGA_EN = 1'b0;		//enable VGA mode when VGA_EN is low
+
+// DE10-Standard / DE1-SoC / Arrow SoCKit VGA mode
+assign SW[3] = 1'b0;		//necessary for VGA mode
+
 
 //////////////////////  Secondary SD  ///////////////////////////////////
 wire SD_CS, SD_CLK, SD_MOSI;
@@ -377,14 +440,14 @@ always@(posedge clk_sys) begin
 				cfg_set <= 0;
 				if(cnt<8) begin
 					case(cnt[2:0])
-						0: if(WIDTH  != io_din[11:0]) WIDTH  <= io_din[11:0];
-						1: if(HFP    != io_din[11:0]) HFP    <= io_din[11:0];
-						2: if(HS     != io_din[11:0]) HS     <= io_din[11:0];
-						3: if(HBP    != io_din[11:0]) HBP    <= io_din[11:0];
-						4: if(HEIGHT != io_din[11:0]) HEIGHT <= io_din[11:0];
-						5: if(VFP    != io_din[11:0]) VFP    <= io_din[11:0];
-						6: if(VS     != io_din[11:0]) VS     <= io_din[11:0];
-						7: if(VBP    != io_din[11:0]) VBP    <= io_din[11:0];
+						0: WIDTH      <= io_din[11:0];
+						1: HFP        <= io_din[11:0];
+						2: HS         <= {io_din[15], io_din[11:0]};
+						3: HBP        <= io_din[11:0];
+						4: HEIGHT     <= io_din[11:0];
+						5: VFP        <= io_din[11:0];
+						6: VS         <= {io_din[15],io_din[11:0]};
+						7: VBP        <= io_din[11:0];
 					endcase
 `ifndef MISTER_DEBUG_NOHDMI
 					if(cnt == 1) begin
@@ -677,15 +740,15 @@ ascal
 	.o_vbl    (hdmi_vbl),
 	.o_brd    (hdmi_brd),
 	.o_lltune (lltune),
-	.htotal   (WIDTH + HFP + HBP + HS),
+	.htotal   (WIDTH + HFP + HBP + HS[11:0]),
 	.hsstart  (WIDTH + HFP),
-	.hsend    (WIDTH + HFP + HS),
+	.hsend    (WIDTH + HFP + HS[11:0]),
 	.hdisp    (WIDTH),
 	.hmin     (hmin),
 	.hmax     (hmax),
-	.vtotal   (HEIGHT + VFP + VBP + VS),
+	.vtotal   (HEIGHT + VFP + VBP + VS[11:0]),
 	.vsstart  (HEIGHT + VFP),
-	.vsend    (HEIGHT + VFP + VS),
+	.vsend    (HEIGHT + VFP + VS[11:0]),
 	.vdisp    (HEIGHT),
 	.vmin     (vmin),
 	.vmax     (vmax),
@@ -901,7 +964,7 @@ pll_hdmi_adj pll_hdmi_adj
 	.reset_na(~reset_req),
 
 	.llena(lowlat),
-	.lltune({16{hdmi_config_done | cfg_dis}} & lltune),
+	.lltune({16{cfg_dis}} & lltune),
 	.locked(led_locked),
 	.i_waitrequest(adj_waitrequest),
 	.i_write(adj_write),
@@ -951,11 +1014,11 @@ pll_hdmi pll_hdmi
 //1920x1080@60 PCLK=148.5MHz CEA
 reg  [11:0] WIDTH  = 1920;
 reg  [11:0] HFP    = 88;
-reg  [11:0] HS     = 48;
+reg  [12:0] HS     = 48;
 reg  [11:0] HBP    = 148;
 reg  [11:0] HEIGHT = 1080;
 reg  [11:0] VFP    = 4;
-reg  [11:0] VS     = 5;
+reg  [12:0] VS     = 5;
 reg  [11:0] VBP    = 36;
 
 wire [63:0] reconfig_to_pll;
@@ -1028,22 +1091,6 @@ end
 wire cfg_ready = 1;
 
 `endif
-
-wire hdmi_config_done;
-hdmi_config hdmi_config
-(
-	.iCLK(FPGA_CLK1_50),
-	.iRST_N(cfg_ready & ~HDMI_TX_INT & ~cfg_dis),
-	.done(hdmi_config_done),
-
-	.I2C_SCL(HDMI_I2C_SCL),
-	.I2C_SDA(HDMI_I2C_SDA),
-
-	.dvi_mode(dvi_mode),
-	.audio_96k(audio_96k),
-	.limited(hdmi_limited),
-	.ypbpr(ypbpr_en & direct_video)
-);
 
 assign HDMI_I2C_SCL = hdmi_scl_en ? 1'b0 : 1'bZ;
 assign HDMI_I2C_SDA = hdmi_sda_en ? 1'b0 : 1'bZ;
@@ -1208,13 +1255,21 @@ reg hdmi_out_de;
 reg [23:0] hdmi_out_d;
 
 always @(posedge hdmi_tx_clk) begin
+	reg [23:0] hdmi_dv_data;
+	reg        hdmi_dv_hs, hdmi_dv_vs, hdmi_dv_de;
+
 	reg hs,vs,de;
 	reg [23:0] d;
 	
-	hs <= (~vga_fb & direct_video) ? dv_hs   : (direct_video & csync_en) ? hdmi_cs_osd : hdmi_hs_osd;
-	vs <= (~vga_fb & direct_video) ? dv_vs   : hdmi_vs_osd;
-	de <= (~vga_fb & direct_video) ? dv_de   : hdmi_de_osd;
-	d  <= (~vga_fb & direct_video) ? dv_data : hdmi_data_osd;
+	hdmi_dv_data <= dv_data;
+	hdmi_dv_hs   <= dv_hs;
+	hdmi_dv_vs   <= dv_vs;
+	hdmi_dv_de   <= dv_de;
+	
+	hs <= (~vga_fb & direct_video) ? hdmi_dv_hs   : (direct_video & csync_en) ? hdmi_cs_osd : hdmi_hs_osd;
+	vs <= (~vga_fb & direct_video) ? hdmi_dv_vs   : hdmi_vs_osd;
+	de <= (~vga_fb & direct_video) ? hdmi_dv_de   : hdmi_de_osd;
+	d  <= (~vga_fb & direct_video) ? hdmi_dv_data : hdmi_data_osd;
 
 	hdmi_out_hs <= hs;
 	hdmi_out_vs <= vs;
@@ -1230,7 +1285,7 @@ assign HDMI_TX_D  = hdmi_out_d;
 /////////////////////////  VGA output  //////////////////////////////////
 
 wire [23:0] vga_data_sl;
-wire        vga_de_sl, vga_vs_sl, vga_hs_sl;
+wire        vga_de_sl, vga_ce_sl, vga_vs_sl, vga_hs_sl;
 scanlines #(0) VGA_scanlines
 (
 	.clk(clk_vid),
@@ -1244,7 +1299,7 @@ scanlines #(0) VGA_scanlines
 	.dout(vga_data_sl),
 	.hs_out(vga_hs_sl),
 	.vs_out(vga_vs_sl),
-	.de_out(vga_de_sl)
+	.de_out(vga_de_sl),
 );
 
 wire [23:0] vga_data_osd;
@@ -1307,11 +1362,16 @@ csync csync_vga(clk_vid, vga_hs_osd, vga_vs_osd, vga_cs_osd);
 
 	wire cs1 = (vga_fb | vga_scaler) ? vgas_cs : vga_cs;
 
-	assign VGA_VS = (VGA_EN | SW[3]) ? 1'bZ      : ((vga_fb | vga_scaler) ? ~vgas_vs : ~vga_vs) | csync_en;
-	assign VGA_HS = (VGA_EN | SW[3]) ? 1'bZ      :  (vga_fb | vga_scaler) ? (csync_en ? ~vgas_cs : ~vgas_hs) : (csync_en ? ~vga_cs : ~vga_hs);
-	assign VGA_R  = (VGA_EN | SW[3]) ? 6'bZZZZZZ :  (vga_fb | vga_scaler) ? vgas_o[23:18] : vga_o[23:18];
-	assign VGA_G  = (VGA_EN | SW[3]) ? 6'bZZZZZZ :  (vga_fb | vga_scaler) ? vgas_o[15:10] : vga_o[15:10];
-	assign VGA_B  = (VGA_EN | SW[3]) ? 6'bZZZZZZ :  (vga_fb | vga_scaler) ? vgas_o[7:2]   : vga_o[7:2]  ;
+	assign VGA_VS = (VGA_EN | SW[3]) ? 1'bZ      :((((vga_fb | vga_scaler) ? ~vgas_vs : ~vga_vs) | csync_en) ^ VS[12]);
+	assign VGA_HS = (VGA_EN | SW[3]) ? 1'bZ      : (((vga_fb | vga_scaler) ? (csync_en ? ~vgas_cs : ~vgas_hs) : (csync_en ? ~vga_cs : ~vga_hs)) ^ HS[12]);
+	//DE10-standard / DE1-SoC / SoCkit implementation for on-board VGA DAC route - additional 2 bit per color
+	assign VGA_R  = (VGA_EN | SW[3]) ? 8'bZZZZZZZZ :   (vga_fb | vga_scaler) ? vgas_o[23:16] : vga_o[23:16];
+	assign VGA_G  = (VGA_EN | SW[3]) ? 8'bZZZZZZZZ :   (vga_fb | vga_scaler) ? vgas_o[15:8]  : vga_o[15:8] ;
+	assign VGA_B  = (VGA_EN | SW[3]) ? 8'bZZZZZZZZ :   (vga_fb | vga_scaler) ? vgas_o[7:0]   : vga_o[7:0]  ;
+	//DE10-standard / DE1-SoC / SoCkit implementation for on-board VGA DAC route - additional pins
+	assign VGA_BLANK_N = VGA_HS && VGA_VS;  //VGA DAC additional required pin
+	assign VGA_SYNC_N = 0; 					//VGA DAC additional required pin
+	assign VGA_CLK = HDMI_TX_CLK; 			//has to define a clock to VGA DAC clock otherwise the picture is noisy 
 `endif
 
 reg video_sync = 0;
@@ -1425,6 +1485,26 @@ alsa alsa
 	.pcm_r(alsa_r)
 );
 
+
+//// DE10-Standard / DE1-SoC / SoCkit Audio CODEC implementation
+
+assign AUD_MUTE    = 1'b1;
+assign AUD_XCK     = HDMI_MCLK;
+assign AUD_DACLRCK = HDMI_LRCLK;
+assign AUD_BCLK    = HDMI_SCLK;
+assign AUD_DACDAT  = HDMI_I2S;
+
+// I2C audio config
+I2C_AV_Config audio_config (
+  // host side
+  .iCLK         (clk_audio        ),
+  .iRST_N       (!reset           ),
+  // i2c side
+  .oI2C_SCLK    (AUD_I2C_SCLK         ),
+  .oI2C_SDAT    (AUD_I2C_SDAT         )
+);
+
+
 ////////////////  User I/O (USB 3.0 connector) /////////////////////////
 
 assign USER_IO[0] =                       !user_out[0]  ? 1'b0 : 1'bZ;
@@ -1521,6 +1601,10 @@ wire [13:0] fb_stride;
 	assign fb_base = 0;
 	assign fb_stride = 0;
 `endif
+
+reg  [1:0] sl_r;
+wire [1:0] sl = sl_r;
+always @(posedge clk_sys) sl_r <= FB_EN ? 2'b00 : scanlines;
 
 emu emu
 (
